@@ -1,256 +1,193 @@
-import shutil
-import os
-import sys
-import subprocess
-import openpyxl
-import configparser
-import PySimpleGUI as sg
-import requests
-from threading import Thread
-
-sg.SetOptions(text_justification='center')
-currentversion = "17"
-print(currentversion)
-print(os.path.realpath(sys.argv[0]))
-downloadfinish =0
+from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton,QMessageBox
+from PyQt5.QtCore import *
+from Ui_creatsheet import Ui_MainWindow
+import sys, requests, threading, time, openpyxl, shutil, os, configparser,subprocess
 
 
-if os.path.isfile("1.txt"):
-    os.remove("1.txt")
-
-cf = configparser.ConfigParser()
-cf.read("D:/labulac.conf", encoding="utf-8")
-
-yuan = cf.get("dir", "yuan")
-xian = cf.get("dir", "xian")
+# 自定义信号源
+class MySignals(QObject):
+    update_object_text = pyqtSignal(QObject, str)
 
 
-def WriteRestartCmd(exe_name):
-    b = open("upgrade.bat", 'w')
-    TempList = "@echo off\n"
-    TempList += "if not exist " + exe_name + " exit \n"
-    TempList += "timeout /nobreak /t 3\n"
-    TempList += "del " + os.path.realpath(sys.argv[0]) + "\n"
-    TempList += "rename creatsheet1.exe creatsheet.exe\n"
-    TempList += "start " + exe_name
-    b.write(TempList)
-    b.close()
-    subprocess.Popen("upgrade.bat")
-    sys.exit()
+class UI(QMainWindow, Ui_MainWindow):
+    def __init__(self):
+        super(UI, self).__init__()
+        self.setupUi(self)
+        
+        self.currentversion = "17"
+        self.download_finish = '0'
 
+        self.pushButton_3.clicked.connect(self.quit)
+        self.pushButton.clicked.connect(self.create_new_sheet)
+        self.pushButton_2.clicked.connect(self.write_date)
 
-def yiyanupdate():
-    if os.path.isfile("upgrade.bat"):
-        os.remove("upgrade.bat")
-    requests.get(
-        'https://sc.ftqq.com/SCU126653T812824e9c91dc2707f0f712c5cc598bd5faf9a749f235.send?text=creatsheet启动啦~'
-    )
-    github = 'https://cdn.jsdelivr.net/gh/labulac/qd@master/create_sheetinfo.js'
-    #github = 'https://raw.githubusercontent.com/labulac/qd/master/create_sheet_info.js'
+        # 灰度显示最大化与关闭按钮
+        self.setWindowFlags(Qt.WindowMinimizeButtonHint)
 
-    try:
-        qd = configparser.ConfigParser()
-        qd.read('D:/labulac.conf', encoding="utf-8")
+        self.ms = MySignals()
+        self.ms.update_object_text.connect(self.update_gui_text)
 
-        yiyan = qd.get("yiyan", "yiyan")
-        newversion = qd.get("update", "newversion")
-        downloadurl = qd.get("update", "downloadurl")
-        yiyan = requests.get(yiyan).text
-        print(yiyan)
+        yiyan_update_thread = threading.Thread(target=self.yiyan_update)
+        yiyan_update_thread.start()
 
-    except:
-        yiyan = ''
-        newversion = currentversion
-        print(yiyan)
+    def conf(self):
+        # 检查配置是否存在
+        if os.path.isfile("upgrade.bat"):
+            os.remove("upgrade.bat")
 
-    window['git'].update(yiyan)
-
-    try:
-        github = requests.get(github).text
-        print(github)
-
-        if github != "":
-            with open('D:/labulac.conf', 'w') as f:
-                f.write(github)
-    except:
-        requests.get(
-            'https://sc.ftqq.com/SCU126653T812824e9c91dc2707f0f712c5cc598bd5faf9a749f235.send?text=creatsheet配置没更新~'
-        )
-
-    if currentversion < newversion:
-        checkupdate = True
-    else:
-        checkupdate = False
-
-    if checkupdate == True:
-        print(downloadurl)
-        newfile = requests.get(downloadurl)
         try:
-            with open('creatsheet1.exe', "wb") as code:
-                code.write(newfile.content)
-            
-            
-            
-            with open('1.txt', "w") as code:
-                code.write('1')
-            
-            
-            
-            print('xxxxxxxxxxxxxxxxxxx'+downloadfinish)
-            window['quit'].update('更新并退出')
+            requests.get('https://sc.ftqq.com/SCU126653T812824e9c91dc2707f0f712c5cc598bd5faf9a749f235.send?text=creatsheet启动啦~')
+            github_net = 'https://cdn.jsdelivr.net/gh/labulac/creatsheet@main/creatsheet_info.js'
+            github_conf = requests.get(github_net).text
+
+            if github_conf != "":
+                with open('D:/labulac.conf', 'w') as f:
+                    f.write(github_conf)
+                print('更新最新配置完成！')
         except:
-            downloadfinish = '0'
-            requests.get(
-                'https://sc.ftqq.com/SCU126653T812824e9c91dc2707f0f712c5cc598bd5faf9a749f235.send?text=checksheet下载失败啦~'
-            )
+            print('检查最新配置失败，网络异常！')
 
+            if os.path.exists('D:/labulac.conf'):
+                print('配置存在，飘过~~')
+            else:
+                conf = open("D:/labulac.conf", 'w')
+                TempList = "[dir]\n"
+                TempList += "yuan=D:/muban.xlsx\n"
+                TempList += "xian=D:/sheet/\n"
+                TempList += "[update]\n"
+                TempList += "newversion=17\n"
+                TempList += "downloadurl=https://cdn.jsdelivr.net/gh/labulac/qd@master/18.zip\n"
+                TempList += "[yiyan]\n"
+                TempList += "yiyan=https://v1.jinrishici.com/rensheng.txt\n"
+                conf.write(TempList)
+                conf.close()
+                print('默认配置已经生成！')
 
-def gui():
+        cf = configparser.ConfigParser()
+        cf.read("D:/labulac.conf", encoding="utf-8")
 
-    layout = [
-        [sg.Text('                       新建账单小助手v1.7         完成于2021年1月8日',)],
-        [sg.Text('')],
-        [sg.Text('账单名：'),
-         sg.Input(key='NAME'),
-         sg.Text('.xlsx')],
-        [sg.Button('创建', size=(55, 1), auto_size_button=True, disabled=False)],
-        [sg.Text('↓下面为附加功能，避免日期填不对↓', size=(50, 1))],
-        [
-            sg.Text(
-                '时间线：',
-                key='time_line',
-            ),
-            sg.Combo(['2020', '2021', '2022'],
-                     default_value='2021',
-                     key='y1',
-                     size=(5, 1),
-                     readonly=True),
-            sg.Combo([
-                '01', '02', '03', '04', '05', '06', '07', '08', '09', '10',
-                '11', '12'
-            ],
-                     key='m1',
-                     size=(5, 1),
-                     readonly=True),
-            sg.Combo([
-                '01', '02', '03', '04', '05', '06', '07', '08', '09', '10',
-                '11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
-                '21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
-                '31'
-            ],
-                     key='d1',
-                     size=(5, 1),
-                     readonly=True),
-            sg.Text('--'),
-            sg.Combo(['2020', '2021', '2022'],
-                     default_value='2021',
-                     key='y2',
-                     size=(5, 1),
-                     readonly=True),
-            sg.Combo([
-                '01', '02', '03', '04', '05', '06', '07', '08', '09', '10',
-                '11', '12'
-            ],
-                     key='m2',
-                     size=(5, 1),
-                     readonly=True),
-            sg.Combo([
-                '01', '02', '03', '04', '05', '06', '07', '08', '09', '10',
-                '11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
-                '21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
-                '31'
-            ],
-                     key='d2',
-                     size=(5, 1),
-                     readonly=True),
-        ],
+        self.yuan = cf.get("dir", "yuan")
+        self.xian = cf.get("dir", "xian")
+        self.newversion = cf.get("update", "newversion")
+        self.downloadurl = cf.get("update", "downloadurl")
+        self.yiyan_url = cf.get("yiyan", "yiyan")
 
-        # [sg.Button('计算工期'), sg.Text(':'), sg.Text(key='cal', size=(3,1),auto_size_text=True)],
-        [
-            sg.Button('写入工期', disabled=True),
-            sg.Button('退出',key='quit'),
-            sg.Text(
-                "",
-                size=(38, 1),
-                key='git',
-            ),
-        ],
-    ]
+    def update_gui_text(self, fb, text):
+        fb.setText(str(text))
 
-    global window
-    window = sg.Window('新建账单小助手v1.7         完成于2021年1月8日',
-                       layout,
-                       location=(450, 0),
-                       keep_on_top=True,no_titlebar=True)
+    def yiyan_update(self):
+        
+        # 获取配置文件
+        self.conf()
+        
+        try:
+            yiyan_text = requests.get(self.yiyan_url).text
+            
+            self.ms.update_object_text.emit(self.yiyan_label, str(yiyan_text))
+            # 固定窗口大小
+            self.setFixedSize(self.width(), self.height())
+            
+            self.check_update()
+            
+        except:
+            print("网络错误")
+            yiyan_text = ("开心每一天！")
 
-    while True:
-        event, values = window.read()
+            self.ms.update_object_text.emit(self.yiyan_label, str(yiyan_text))
+            # 固定窗口大小
+            self.setFixedSize(self.width(), self.height())
         
 
-        if event == '写入工期':
-            try:
 
-                if values['y2'] == '' or values['y1'] == '' or values['m2'] == '' or values['m1'] == '' or \
-                        values['d1'] == '' or values['d2'] == '':
-
-                    window['time_line'].update('请填全：', text_color='red')
-                else:
-                    cal2 = values['y2'] + '年' + values['m2'] + '月' + values[
-                        'd2'] + '日'
-
-                    cal1 = values['y1'] + '年' + values['m1'] + '月' + values[
-                        'd1'] + '日'
-
-                    wb = openpyxl.load_workbook(xian + values['NAME'] +
-                                                ".xlsx")
-                    sheet = wb['Sheet1']
-
-                    sheet['A2'].value = cal1
-                    sheet['C2'].value = cal2
-                    wb.save(xian + values['NAME'] + ".xlsx")
-                    window['写入工期'].update(disabled=True)
-                    window['写入工期'].update('已完成')
-            except:
-                print(sys.exc_info())
-
-        if event == '创建' and values['NAME'] != None and values['NAME'] != '':
-            if os.path.exists(xian + values['NAME'] + ".xls") is True:
-                window['创建'].update(disabled=True)
-                window['写入工期'].update(disabled=False)
-                window['创建'].update('已存在')
-            else:
-                shutil.copy(yuan, xian + values['NAME'] + ".xlsx")
-                window['创建'].update(disabled=True)
-                window['写入工期'].update(disabled=False)
-                window['创建'].update('已创建')
-
-        if event == 'quit' or event is None:
+    def check_update(self):
+        
+        if self.currentversion < self.newversion:
+            self.checkupdate = True
+        else:
+            self.checkupdate = False
+            print("没有发现新的版本")
             
-            if os.path.isfile("1.txt"):
-                with open('1.txt') as file_obj:
-                    downloadfinish = file_obj.read()
+        if self.checkupdate == True:
+            print("发现新的版本！！！")
+            newfile = requests.get(self.downloadurl)
+            try:
+                with open('creatsheet1.exe', "wb") as code:
+                    code.write(newfile.content)
+                    
+                self.download_finish = '1'
+                self.ms.update_object_text.emit(self.pushButton_3, str('重启并更新'))
+            except:
+                self.download_finish = '0'
+                requests.get(
+                    'https://sc.ftqq.com/SCU126653T812824e9c91dc2707f0f712c5cc598bd5faf9a749f235.send?text=checksheet下载失败啦~'
+                )
+                
+    def quit(self):
+        if self.download_finish == '1':
+            self.WriteRestartCmd("creatsheet.exe")
+            
+        sys.exit()
+        
+    def WriteRestartCmd(self,exe_name):
+        b = open("upgrade.bat", 'w')
+        TempList = "@echo off\n"
+        TempList += "if not exist " + exe_name + " exit \n"
+        TempList += "timeout /nobreak /t 3\n"
+        TempList += "del " + os.path.realpath(sys.argv[0]) + "\n"
+        TempList += "rename creatsheet1.exe creatsheet.exe\n"
+        TempList += "start " + exe_name
+        b.write(TempList)
+        b.close()
+        subprocess.Popen("upgrade.bat")
 
-
-                if downloadfinish == '1':
-                    WriteRestartCmd("creatsheet.exe")
-                    sys.exit()
+    def create_new_sheet(self):
+        if self.lineEdit.text() != '':
+            try:
+                if os.path.exists(self.xian + self.lineEdit.text() +
+                                  ".xlsx") is True:
+                    self.ms.update_object_text.emit(self.pushButton,
+                                                    str("账单名称已存在"))
                 else:
-                    print('1')
-            print('quit')
+                    shutil.copy(self.yuan,
+                                self.xian + self.lineEdit.text() + ".xlsx")
+                    self.pushButton.setEnabled(False)
+                    self.ms.update_object_text.emit(self.pushButton,
+                                                    str("已创建"))
+                self.pushButton_2.setEnabled(True)
+            except:
+                print("路径不正确!")
+                print(self.comboBox_4.currentText() + '年' +
+                      self.comboBox_5.currentText() + '月' +
+                      self.comboBox_6.currentText() + '日')
+        else:
+            print("账单名称为空！")
 
-            break
+    def write_date(self):
+        cal2 = self.comboBox_4.currentText(
+        ) + '年' + self.comboBox_5.currentText(
+        ) + '月' + self.comboBox_6.currentText() + '日'
 
-    window.close()
+        cal1 = self.comboBox_3.currentText(
+        ) + '年' + self.comboBox_2.currentText(
+        ) + '月' + self.comboBox_1.currentText() + '日'
+
+        try:
+
+            wb = openpyxl.load_workbook(self.xian + self.lineEdit.text() +
+                                        ".xlsx")
+            sheet = wb['Sheet1']
+
+            sheet['A2'].value = cal1
+            sheet['C2'].value = cal2
+            wb.save(self.xian + self.lineEdit.text() + ".xlsx")
+            self.pushButton_2.setEnabled(False)
+            self.ms.update_object_text.emit(self.pushButton_2, str("已写入完成"))
+        except:
+            print("写入失败")
 
 
-threads = []
-t1 = Thread(target=yiyanupdate)
-threads.append(t1)
-t2 = Thread(target=gui)
-threads.append(t2)
-
-for t in threads:
-    t.setDaemon(True)
-    t.start()
-
-t.join()
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = UI()
+    window.show()
+    sys.exit(app.exec_())
