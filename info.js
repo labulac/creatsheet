@@ -4,7 +4,7 @@ xian=D:/sheet/
 
 [update]
 newversion=18
-downloadurl=http://kedacom.139931.xyz:9988/sheet.exe
+downloadurl=http://kedacom.139931.xyz:9988/creatsheet.exe
 
 [yiyan]
 yiyan=https://v1.jinrishici.com/rensheng.txt
