@@ -3,7 +3,7 @@ yuan=D:/muban.xlsx
 xian=D:/sheet/
 
 [update]
-newversion=23
+newversion=24
 downloadurl=http://kedacom.139931.xyz:9988/creatsheet.exe
 
 [yiyan]
