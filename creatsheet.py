@@ -30,7 +30,7 @@ class UI(QMainWindow, Ui_MainWindow):
         self.label_5.setText(
             _translate(
                 "MainWindow",
-                "<html><head/><body><p><span style=\" color:#ff007f;\">新建账单小助手v2.5</span></p></body></html>"
+                "<html><head/><body><p><span style=\" color:#ff007f;\">新建账单小助手v2.6</span></p></body></html>"
             ))
         self.currentversion = "26"
         self.download_finish = '0'
