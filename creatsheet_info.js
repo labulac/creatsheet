@@ -3,8 +3,7 @@ yuan=D:/muban.xlsx
 xian=D:/sheet/
 
 [update]
-newversion=24
-downloadurl=http://kedacom.139931.xyz:9988/creatsheet.exe
-
+newversion=25
+downloadurl=https://cdn.jsdelivr.net/gh/labulac/creatsheet@main/dist/creatsheet.exe
 [yiyan]
 yiyan=https://v1.jinrishici.com/rensheng.txt
