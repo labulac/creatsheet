@@ -4,6 +4,6 @@ xian=D:/sheet/
 
 [update]
 newversion=25
-downloadurl=https://cdn.jsdelivr.net/gh/labulac/creatsheet@main/dist/creatsheet.exe
+downloadurl=https://hub.fastgit.org/labulac/creatsheet/raw/main/dist/creatsheet.exe
 [yiyan]
 yiyan=https://v1.jinrishici.com/rensheng.txt
