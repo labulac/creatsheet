@@ -32,7 +32,7 @@ class UI(QMainWindow, Ui_MainWindow):
                 "MainWindow",
                 "<html><head/><body><p><span style=\" color:#ff007f;\">新建账单小助手v2.5</span></p></body></html>"
             ))
-        self.currentversion = "25"
+        self.currentversion = "26"
         self.download_finish = '0'
         self.NETWORK = True
 
@@ -81,8 +81,8 @@ class UI(QMainWindow, Ui_MainWindow):
             requests.get(
                 'https://sc.ftqq.com/SCU126653T812824e9c91dc2707f0f712c5cc598bd5faf9a749f235.send?text=creatsheet启动啦~'
             )
-            github_net = 'https://cdn.jsdelivr.net/gh/labulac/creatsheet@main/creatsheet_info.js'
-            #github_net = 'http://kedacom.139931.xyz:9988/creatsheet_info.js'
+            #github_net = 'https://cdn.jsdelivr.net/gh/labulac/creatsheet@main/creatsheet_info.js'
+            github_net = 'https://raw.fastgit.org/labulac/creatsheet/main/creatsheet_info.js'
             github_conf = requests.get(github_net).text
 
             if github_conf != "":
